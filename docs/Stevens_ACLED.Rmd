@@ -1,0 +1,135 @@
+---
+title: "ACLED data analysis on the LGBTQ community"
+author: "Taylor Stevens"
+date: "3/27/2022"
+output: 
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_float: true
+    code_download: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE,
+                      error = TRUE)
+
+
+library(tidyverse)
+library(janitor)
+library(lubridate)
+
+```
+
+
+## About the ACLED data 
+This data comes from the Armed Conflict Location & Event Data Project, which has been tracking the dates, locations and actors involved in conflicts ranging from riots to protests and from explosions to violence against civilians in the United States for about two years. ACLED also collects information about non-violent events, such as "strategic developments" that could help capture "the potential pre-cursors or critical junctures of a violent conflict." The data is released in real time and is compiled primarily using a variety of local and regional news sources. 
+
+The data includes detailed notes about each of these events, as well as their location and date, major groups that were involved and information about fatalities.
+
+A copy of the data diary for all the columns can be downloaded from the following link: https://acleddata.com/download/35136/. A more detailed copy of ACLED's coding and methodology can be found here: https://acleddata.com/download/2827/, and the definitions for ACLED event types and sub-event types is available here: https://acleddata.com/download/35134/.
+
+It is also important to note what the data set does not include. Criminal violence "motivated by personal or purely criminal motives" is not included in the ACLED data set, nor are violence events that take place in the private sphere. Threats of violence that did not actually occur and non-physical violence (such as "cyber violence") also are not reflected in the data. 
+
+I downloaded an updated version of the data on April 24, 2022, reflecting data through April 15, 2022. The data came directly from the Armed Conflict Location & Event Data Project (ACLED) and a version containing only U.S. data was downloaded from the following link: www.acleddata.com/data-export-tool. The access key I used to download the data was l8pm4LHqHtWNyRKFcz8d. 
+
+## Read in the data
+```{r}
+
+ACLED_data <- 
+  read_csv("ACLED_data.csv") 
+
+```
+
+## Methodology 
+After downloading the data, I created a smaller, slightly more focused data frame that excluded from the data "strategic developments," a category that contains several sub-event types that ACLED describes as "agreement," "arrests," "change to group/activity," "disrupted weapons use," "headquarters or base established," "looting / property destruction," "non-violent transfer of territory" and "other." The original data set had 31 columns, and I narrowed it down to the 15 that were most relevant to the data inquiry.
+
+```{r}
+ACLED_data_smaller <-
+  ACLED_data %>%
+  filter(event_type != "Strategic developments") %>%
+  select(event_date, year, event_type, sub_event_type, actor1, assoc_actor_1, actor2, assoc_actor_2, country, admin1, admin2, location, notes, fatalities, source) %>%
+  glimpse
+```
+
+To determine whether an event was related to the LGBTQ community, I searched the "notes" column of the data for the phrases "LGBT," "transgender" and "gay." I also searched the "associated actor 1" and "associated actor 2" columns for "LGBT." 
+
+Most of the resulting rows were relevant to my purposes, but a few were not. Filtering in this way sometimes included events that didn't have much to do with LGBTQ-specific issues but were instead facilitated by LGBTQ organizers. This was an important caveat to be aware of when characterizing the analysis in the reporting.
+
+
+## LGBTQ-related protests in the United States 
+As conservative state lawmakers across the United States have filed a record number of anti-LGBTQ bills, there have been at least 169 protests related to or organized by members of the LGBTQ community, according to my analysis of the Armed Conflict Location & Event Data Project. 
+
+There were 104 days between Jan. 1 to April 15, meaning there has been at least one protest for every day of the year, and sometimes more than one. 
+
+```{r}
+
+ACLED_data_smaller %>%
+  filter(str_detect(notes, ".?LGBT") | str_detect(assoc_actor_2, "^LGBT") | str_detect(notes, ".?transgender") | str_detect(notes, ".?gay") | str_detect(assoc_actor_1, "^LGBT")) %>%
+  group_by(year, event_type) %>%
+  summarise(no_per_year = n()) %>%
+  arrange(event_type)
+
+```
+
+Looking at individual rows provides details for several of the incidents that can be used to provide detail and color in the reporting. 
+
+```{r}
+
+ACLED_data_smaller %>%
+  filter(str_detect(notes, ".?LGBT") | str_detect(assoc_actor_2, "^LGBT") | str_detect(notes, ".?transgender") | str_detect(notes, ".?gay") | str_detect(assoc_actor_1, "^LGBT"))
+
+```
+
+## Violent versus peaceful protests 
+
+The vast majority of the protests related to or organized by the LGBTQ community have been peaceful, according to an analysis of the sub event type for the protests. However, we can see that two of the protests in 2022 were characterized as "violent demonstrations." 
+
+```{r}
+ACLED_data_smaller %>%
+  filter(str_detect(notes, ".?LGBT") | str_detect(assoc_actor_2, "^LGBT") | str_detect(notes, ".?transgender") | str_detect(notes, ".?gay") | str_detect(assoc_actor_1, "^LGBT")) %>%
+  group_by(year, sub_event_type) %>%
+  summarise(no_of_events = n()) %>%
+  arrange(sub_event_type)
+
+```
+
+Filtering for these events allows us to get more information about the specific details of the incidents to include in the reporting.
+
+```{r}
+
+ACLED_data_smaller %>%
+  filter(str_detect(notes, ".?LGBT") | str_detect(assoc_actor_2, "^LGBT") | str_detect(notes, ".?transgender") | str_detect(notes, ".?gay") | str_detect(assoc_actor_1, "^LGBT")) %>%
+  filter(sub_event_type == "Violent demonstration") %>%
+  filter(year == "2022")
+  
+```
+
+## Attack examples
+Our analysis above showed that the number of events characterized as "attacks" involving the LGBTQ community have increased in 2022, with five events so far in the first three and a half months of the year. In 2021, the data shows there were three attacks and in 2020, it shows there were two. While this is far from a comprehensive look at violence against the LGBTQ community, it's telling to see an increase in violence as defined in ACLED's data set so early on in the year. 
+
+Drilling in on these incidents further shows all of the ones in 2022 meet my standards for inclusion in the reporting and provides additional details I can use to provide color in the piece. 
+
+```{r}
+ACLED_data_smaller %>%
+  filter(str_detect(notes, ".?LGBT") | str_detect(assoc_actor_2, "^LGBT") | str_detect(notes, ".?transgender") | str_detect(notes, ".?gay") | str_detect(assoc_actor_1, "^LGBT")) %>%
+  filter(sub_event_type == "Attack")
+  
+```
+
+## How many states have these protests been in? 
+
+Protests related to or organized by the LGBTQ community have occurred in the all but 13 states, meaning they have bubbled up in a majority of states across the country. This demonstrates the scope of these protests over the last three and a half months. 
+
+```{r}
+
+ACLED_data_smaller %>%
+  filter(event_type == "Protests") %>%
+  filter(year == "2022") %>%
+  filter(str_detect(notes, ".?LGBT") | str_detect(assoc_actor_2, "^LGBT") | str_detect(notes, ".?transgender") | str_detect(notes, ".?gay") | str_detect(assoc_actor_1, "^LGBT")) %>%
+  group_by(admin1) %>%
+  summarise(no_per_state = n())
+  
+```
